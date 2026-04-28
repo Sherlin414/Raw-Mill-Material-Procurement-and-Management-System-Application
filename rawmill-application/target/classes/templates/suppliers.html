@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Suppliers — Raw Mill</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">⚙️</div>
+      <div class="brand-name">Raw Mill</div>
+      <div class="brand-sub">Management System</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="/dashboard" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label" style="margin-top:8px;">Operations</div>
+      <a href="/suppliers" class="nav-item active"><span class="nav-icon">🏭</span> Suppliers</a>
+      <a href="/materials" class="nav-item"><span class="nav-icon">🪨</span> Materials</a>
+      <a href="/purchases" class="nav-item"><span class="nav-icon">🛒</span> Purchase Orders</a>
+      <div th:if="${role == 'ADMIN'}">
+        <div class="nav-section-label" style="margin-top:8px;">Admin</div>
+        <a href="/supplier/add" class="nav-item"><span class="nav-icon">➕</span> Add Supplier</a>
+        <a href="/material/add" class="nav-item"><span class="nav-icon">➕</span> Add Material</a>
+        <a href="/lowstock" class="nav-item"><span class="nav-icon">⚠️</span> Low Stock</a>
+        <a href="/summary" class="nav-item"><span class="nav-icon">📋</span> Summary Report</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" th:text="${role == 'ADMIN' ? 'A' : 'U'}">A</div>
+        <div class="user-info">
+          <div class="user-name" th:text="${role == 'ADMIN' ? 'admin' : 'user'}">admin</div>
+          <div class="user-role" th:text="${role}">ADMIN</div>
+        </div>
+      </div>
+      <a href="/logout" class="logout-btn">🚪 Sign Out</a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <div class="section-eyebrow">Operations</div>
+        <h1 class="page-title">Suppliers</h1>
+        <p class="page-subtitle">Manage your material supplier network</p>
+      </div>
+      <a th:if="${role == 'ADMIN'}" href="/supplier/add" class="btn btn-gold" style="margin-top:8px;">+ Add Supplier</a>
+    </div>
+
+    <div class="page-body">
+      <div th:if="${success}" class="alert alert-success">✔ <span th:text="${success}"></span></div>
+
+      <div th:if="${#lists.isEmpty(suppliers)}" class="panel">
+        <div class="empty-state">
+          <div class="empty-state-icon">🏭</div>
+          <p>No suppliers yet. <a th:if="${role == 'ADMIN'}" href="/supplier/add" style="color:var(--gold-400);">Add your first supplier →</a></p>
+        </div>
+      </div>
+
+      <div th:if="${!#lists.isEmpty(suppliers)}" class="panel">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Supplier Name</th>
+              <th>Category</th>
+              <th>Contact</th>
+              <th>Phone</th>
+              <th>City</th>
+              <th>Rating</th>
+              <th>GST</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="s : ${suppliers}">
+              <td><span style="color:var(--gold-300);font-weight:600;" th:text="${s.supplierId}">—</span></td>
+              <td>
+                <div style="font-weight:600;color:var(--white);" th:text="${s.supplierName}">—</div>
+                <div style="font-size:.75rem;color:var(--muted);" th:text="${s.emailId}">—</div>
+              </td>
+              <td><span class="badge badge-blue" th:text="${s.materialCategory}">—</span></td>
+              <td th:text="${s.contactPerson}">—</td>
+              <td th:text="${s.phoneNumber}">—</td>
+              <td th:text="${s.city + ', ' + s.state}">—</td>
+              <td>
+                <span class="stars" th:text="${'★'.repeat(s.rating.intValue()) + '☆'.repeat(5 - s.rating.intValue())}">★★★★★</span>
+                <span style="font-size:.75rem;color:var(--muted);margin-left:4px;" th:text="${s.rating}">5</span>
+              </td>
+              <td style="font-size:.78rem;" th:text="${s.gstNumber}">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

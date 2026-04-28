@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard — Raw Mill</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">⚙️</div>
+      <div class="brand-name">Raw Mill</div>
+      <div class="brand-sub">Management System</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="/dashboard" class="nav-item active">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+
+      <div class="nav-section-label" style="margin-top:8px;">Operations</div>
+      <a href="/suppliers" class="nav-item">
+        <span class="nav-icon">🏭</span> Suppliers
+      </a>
+      <a href="/materials" class="nav-item">
+        <span class="nav-icon">🪨</span> Materials
+      </a>
+      <a href="/purchases" class="nav-item">
+        <span class="nav-icon">🛒</span> Purchase Orders
+      </a>
+
+      <div th:if="${role == 'ADMIN'}">
+        <div class="nav-section-label" style="margin-top:8px;">Admin</div>
+        <a href="/supplier/add" class="nav-item">
+          <span class="nav-icon">➕</span> Add Supplier
+        </a>
+        <a href="/material/add" class="nav-item">
+          <span class="nav-icon">➕</span> Add Material
+        </a>
+        <a href="/lowstock" class="nav-item">
+          <span class="nav-icon">⚠️</span> Low Stock
+        </a>
+        <a href="/summary" class="nav-item">
+          <span class="nav-icon">📋</span> Summary Report
+        </a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" th:text="${username != null ? username.substring(0,1).toUpperCase() : 'U'}">A</div>
+        <div class="user-info">
+          <div class="user-name" th:text="${username}">admin</div>
+          <div class="user-role" th:text="${role}">ADMIN</div>
+        </div>
+      </div>
+      <a href="/logout" class="logout-btn">🚪 Sign Out</a>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <div class="section-eyebrow">Overview</div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Real-time snapshot of your raw mill operations</p>
+      </div>
+      <div style="display:flex; gap:10px; align-items:flex-start; margin-top:8px;">
+        <a href="/purchase/add" class="btn btn-gold btn-sm">+ New Purchase</a>
+        <a th:if="${role == 'ADMIN'}" href="/material/add" class="btn btn-outline btn-sm">+ Add Material</a>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- KPI CARDS -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">🏭</div>
+          <div class="stat-value" th:text="${totalSuppliers}">0</div>
+          <div class="stat-label">Total Suppliers</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🪨</div>
+          <div class="stat-value" th:text="${totalMaterials}">0</div>
+          <div class="stat-label">Materials in Inventory</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🛒</div>
+          <div class="stat-value" th:text="${totalPurchases}">0</div>
+          <div class="stat-label">Purchase Orders</div>
+        </div>
+        <div class="stat-card" th:classappend="${lowStockCount > 0 ? 'alert' : ''}">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-value" th:text="${lowStockCount}">0</div>
+          <div class="stat-label">Low Stock Alerts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📦</div>
+          <div class="stat-value" th:text="${#numbers.formatDecimal(totalQuantity, 0, 'COMMA', 1, 'POINT')}">0</div>
+          <div class="stat-label">Total Qty (Tons)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value">₹<span th:text="${#numbers.formatDecimal(totalValue / 1000, 0, 'COMMA', 1, 'POINT')}">0</span>K</div>
+          <div class="stat-label">Total Purchase Value</div>
+        </div>
+      </div>
+
+      <!-- CHARTS + RECENT ORDERS GRID -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px; margin-bottom:24px;">
+
+        <!-- Donut Chart -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">📊 Inventory Status</span>
+          </div>
+          <div class="panel-body" style="display:flex; align-items:center; justify-content:center; gap:32px;">
+            <div style="width:180px; height:180px; position:relative;">
+              <canvas id="stockChart"></canvas>
+              <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+                <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:700;color:#fff;"
+                     th:text="${totalMaterials}">0</div>
+                <div style="font-size:0.65rem;color:#8a9bb5;text-transform:uppercase;letter-spacing:.06em;">Total</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:10px;height:10px;border-radius:50%;background:#4be89a;"></div>
+                <span style="font-size:.82rem;color:#c8d8f0;">Normal Stock</span>
+                <span style="margin-left:auto;font-weight:600;color:#fff;" id="normalCount">—</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:10px;height:10px;border-radius:50%;background:#ff7070;"></div>
+                <span style="font-size:.82rem;color:#c8d8f0;">Low Stock</span>
+                <span style="margin-left:auto;font-weight:600;color:#ff7070;" th:text="${lowStockCount}">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bar Chart - purchase value placeholder -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">📈 Purchase Activity</span>
+          </div>
+          <div class="panel-body" style="height:220px;">
+            <canvas id="purchaseChart" style="max-height:180px;"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECENT PURCHASES TABLE -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">🕐 Recent Purchase Orders</span>
+          <a href="/purchases" class="btn btn-outline btn-sm">View All →</a>
+        </div>
+        <div th:if="${#lists.isEmpty(recentPurchases)}" class="empty-state">
+          <div class="empty-state-icon">📦</div>
+          <p>No purchase orders yet. <a href="/purchase/add" style="color:var(--gold-400);">Place your first order →</a></p>
+        </div>
+        <div th:if="${!#lists.isEmpty(recentPurchases)}">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Material</th>
+                <th>Supplier</th>
+                <th>Qty</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="p : ${recentPurchases}">
+                <td><span style="color:var(--gold-300);font-weight:600;" th:text="${p.orderId}">—</span></td>
+                <td th:text="${p.materialName}">—</td>
+                <td th:text="${p.supplierId}">—</td>
+                <td th:text="${p.purchasedQuantity}">—</td>
+                <td>₹<span th:text="${#numbers.formatDecimal(p.totalAmount, 0, 'COMMA', 2, 'POINT')}">0</span></td>
+                <td>
+                  <span class="badge"
+                        th:classappend="${p.deliveryStatus == 'Delivered' ? 'badge-green' : (p.deliveryStatus == 'Pending' ? 'badge-gold' : 'badge-muted')}"
+                        th:text="${p.deliveryStatus}">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /page-body -->
+  </main>
+</div>
+
+<script>
+  // Data from Thymeleaf
+  const totalMaterials = [[${totalMaterials}]];
+  const lowStockCount  = [[${lowStockCount}]];
+  const normalCount    = totalMaterials - lowStockCount;
+  document.getElementById('normalCount').textContent = normalCount;
+
+  // Donut Chart
+  const stockCtx = document.getElementById('stockChart').getContext('2d');
+  new Chart(stockCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Normal', 'Low Stock'],
+      datasets: [{
+        data: [normalCount || 0, lowStockCount || 0],
+        backgroundColor: ['rgba(75,232,154,0.85)', 'rgba(255,112,112,0.85)'],
+        borderColor: ['rgba(75,232,154,0.3)', 'rgba(255,112,112,0.3)'],
+        borderWidth: 1,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      cutout: '70%',
+      plugins: { legend: { display: false } },
+      animation: { animateRotate: true, duration: 800 }
+    }
+  });
+
+  // Bar Chart - last 6 months placeholder
+  const purchaseCtx = document.getElementById('purchaseChart').getContext('2d');
+  new Chart(purchaseCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'],
+      datasets: [{
+        label: 'Orders',
+        data: [0, 0, 0, 0, 0, [[${totalPurchases}]]],
+        backgroundColor: 'rgba(212,160,23,0.25)',
+        borderColor: 'rgba(212,160,23,0.8)',
+        borderWidth: 1.5,
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          ticks: { color: '#8a9bb5', font: { size: 11 } },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        },
+        y: {
+          ticks: { color: '#8a9bb5', font: { size: 11 } },
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+</script>
+</body>
+</html>

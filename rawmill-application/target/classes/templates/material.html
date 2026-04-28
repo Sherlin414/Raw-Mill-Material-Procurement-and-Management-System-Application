@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Material — Raw Mill</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">⚙️</div>
+      <div class="brand-name">Raw Mill</div>
+      <div class="brand-sub">Management System</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="/dashboard" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label" style="margin-top:8px;">Operations</div>
+      <a href="/suppliers" class="nav-item"><span class="nav-icon">🏭</span> Suppliers</a>
+      <a href="/materials" class="nav-item"><span class="nav-icon">🪨</span> Materials</a>
+      <a href="/purchases" class="nav-item"><span class="nav-icon">🛒</span> Purchase Orders</a>
+      <div class="nav-section-label" style="margin-top:8px;">Admin</div>
+      <a href="/supplier/add" class="nav-item"><span class="nav-icon">➕</span> Add Supplier</a>
+      <a href="/material/add" class="nav-item active"><span class="nav-icon">➕</span> Add Material</a>
+      <a href="/lowstock" class="nav-item"><span class="nav-icon">⚠️</span> Low Stock</a>
+      <a href="/summary" class="nav-item"><span class="nav-icon">📋</span> Summary Report</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar">A</div>
+        <div class="user-info">
+          <div class="user-name">admin</div>
+          <div class="user-role">ADMIN</div>
+        </div>
+      </div>
+      <a href="/logout" class="logout-btn">🚪 Sign Out</a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <div class="section-eyebrow">Admin</div>
+        <h1 class="page-title">Add Material</h1>
+        <p class="page-subtitle">Register a new raw material in the inventory</p>
+      </div>
+      <a href="/materials" class="btn btn-outline" style="margin-top:8px;">← Back to Materials</a>
+    </div>
+
+    <div class="page-body">
+      <div th:if="${error}" class="alert alert-error">⚠ <span th:text="${error}"></span></div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">🪨 Material Details</span>
+        </div>
+        <div class="panel-body">
+          <form method="post" action="/material/save">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Material ID *</label>
+                <input type="text" name="materialId" class="form-control" placeholder="e.g. MAT001" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Material Name *</label>
+                <input type="text" name="materialName" class="form-control" placeholder="e.g. Limestone" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Material Type *</label>
+                <input type="text" name="materialType" class="form-control" placeholder="e.g. Mineral, Chemical" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Grade *</label>
+                <input type="text" name="grade" class="form-control" placeholder="e.g. A, B, Premium" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Purity % *</label>
+                <input type="number" name="purityPercentage" class="form-control" placeholder="0–100" min="0" max="100" step="0.1" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Initial Quantity *</label>
+                <input type="number" name="quantity" class="form-control" placeholder="e.g. 500" min="0" step="0.01" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Unit *</label>
+                <select name="unit" class="form-control" required>
+                  <option value="">— Select Unit —</option>
+                  <option value="Ton">Ton</option>
+                  <option value="Kg">Kg</option>
+                  <option value="Litre">Litre</option>
+                  <option value="Bag">Bag</option>
+                  <option value="Piece">Piece</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Unit Cost (₹) *</label>
+                <input type="number" name="unitCost" class="form-control" placeholder="e.g. 1500.00" min="0.01" step="0.01" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Reorder Level *</label>
+                <input type="number" name="reorderLevel" class="form-control" placeholder="Min qty before reorder" min="0" step="0.01" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Supplier *</label>
+                <select name="supplierId" class="form-control" required>
+                  <option value="">— Select Supplier —</option>
+                  <option th:each="s : ${suppliers}"
+                          th:value="${s.supplierId}"
+                          th:text="${s.supplierId + ' — ' + s.supplierName}">—</option>
+                </select>
+              </div>
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-label">Storage Location *</label>
+                <input type="text" name="storageLocation" class="form-control" placeholder="e.g. Warehouse A, Bay 3" required>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:12px; margin-top:28px;">
+              <button type="submit" class="btn btn-gold">✓ Save Material</button>
+              <a href="/materials" class="btn btn-outline">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

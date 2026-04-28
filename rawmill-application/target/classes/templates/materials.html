@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Materials — Raw Mill</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">⚙️</div>
+      <div class="brand-name">Raw Mill</div>
+      <div class="brand-sub">Management System</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="/dashboard" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label" style="margin-top:8px;">Operations</div>
+      <a href="/suppliers" class="nav-item"><span class="nav-icon">🏭</span> Suppliers</a>
+      <a href="/materials" class="nav-item active"><span class="nav-icon">🪨</span> Materials</a>
+      <a href="/purchases" class="nav-item"><span class="nav-icon">🛒</span> Purchase Orders</a>
+      <div th:if="${role == 'ADMIN'}">
+        <div class="nav-section-label" style="margin-top:8px;">Admin</div>
+        <a href="/supplier/add" class="nav-item"><span class="nav-icon">➕</span> Add Supplier</a>
+        <a href="/material/add" class="nav-item"><span class="nav-icon">➕</span> Add Material</a>
+        <a href="/lowstock" class="nav-item"><span class="nav-icon">⚠️</span> Low Stock</a>
+        <a href="/summary" class="nav-item"><span class="nav-icon">📋</span> Summary Report</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" th:text="${role == 'ADMIN' ? 'A' : 'U'}">A</div>
+        <div class="user-info">
+          <div class="user-name" th:text="${role == 'ADMIN' ? 'admin' : 'user'}">admin</div>
+          <div class="user-role" th:text="${role}">ADMIN</div>
+        </div>
+      </div>
+      <a href="/logout" class="logout-btn">🚪 Sign Out</a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <div class="section-eyebrow">Operations</div>
+        <h1 class="page-title">Materials</h1>
+        <p class="page-subtitle">Inventory of all raw materials in the mill</p>
+      </div>
+      <a th:if="${role == 'ADMIN'}" href="/material/add" class="btn btn-gold" style="margin-top:8px;">+ Add Material</a>
+    </div>
+
+    <div class="page-body">
+      <div th:if="${success}" class="alert alert-success">✔ <span th:text="${success}"></span></div>
+
+      <div th:if="${#lists.isEmpty(materials)}" class="panel">
+        <div class="empty-state">
+          <div class="empty-state-icon">🪨</div>
+          <p>No materials in inventory. <a th:if="${role == 'ADMIN'}" href="/material/add" style="color:var(--gold-400);">Add your first material →</a></p>
+        </div>
+      </div>
+
+      <div th:if="${!#lists.isEmpty(materials)}" class="panel">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Material Name</th>
+              <th>Type / Grade</th>
+              <th>Purity</th>
+              <th>Quantity</th>
+              <th>Reorder Level</th>
+              <th>Unit Cost</th>
+              <th>Supplier</th>
+              <th>Location</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="m : ${materials}" th:classappend="${m.lowStock ? 'row-low-stock' : ''}">
+              <td><span style="color:var(--gold-300);font-weight:600;" th:text="${m.materialId}">—</span></td>
+              <td>
+                <div style="font-weight:600;" th:text="${m.materialName}">—</div>
+              </td>
+              <td>
+                <span class="badge badge-muted" th:text="${m.materialType}">—</span>
+                <span style="font-size:.75rem;color:var(--muted);margin-left:4px;" th:text="${m.grade}">—</span>
+              </td>
+              <td>
+                <div class="progress-bar-wrap" style="width:60px;margin-bottom:3px;">
+                  <div class="progress-bar-fill" th:style="'width:' + ${m.purityPercentage} + '%'"></div>
+                </div>
+                <span style="font-size:.75rem;" th:text="${m.purityPercentage + '%'}">—</span>
+              </td>
+              <td>
+                <span style="font-weight:600;" th:text="${m.quantity}">—</span>
+                <span style="color:var(--muted);font-size:.8rem;" th:text="' ' + ${m.unit}">—</span>
+              </td>
+              <td th:text="${m.reorderLevel + ' ' + m.unit}">—</td>
+              <td>₹<span th:text="${#numbers.formatDecimal(m.unitCost, 0, 'COMMA', 2, 'POINT')}">—</span></td>
+              <td th:text="${m.supplierId}">—</td>
+              <td th:text="${m.storageLocation}">—</td>
+              <td>
+                <span class="badge" th:classappend="${m.lowStock ? 'badge-red' : 'badge-green'}"
+                      th:text="${m.lowStock ? '⚠ Low Stock' : '✓ OK'}">—</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>
